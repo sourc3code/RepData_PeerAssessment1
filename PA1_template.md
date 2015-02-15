@@ -1,73 +1,80 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 
 ## Loading and preprocessing the data
 Unzip the dataset zip files if not yet exists
-```{r Unzipping Activity.zip}
+
+```r
     if(!file_test("-f","activity.csv"))
     {
         unzip(zipfile = "activity.zip")
     }
 ```
 Read dataset
-```{r Read dataset}
+
+```r
     ds<-read.csv("activity.csv")
 ```
 
 ## What is mean total number of steps taken per day?
 
-```{r}
+
+```r
     totals=aggregate(steps ~ date,ds , sum, na.rm=TRUE)
     hist(totals$steps,main = "Histogram of Total Steps per day", col = "red")
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-1-1.png) 
+
 Calculate mean and median values
 
-```{r}
+
+```r
     meanVal=mean(totals$steps)  
     medianVal=median(totals$steps)
 ```
-The **mean** of the Total Steps per day is **`r meanVal`**  
-The **median** of the Total Steps per day is **`r medianVal`**  
+The **mean** of the Total Steps per day is **1.0766189\times 10^{4}**  
+The **median** of the Total Steps per day is **10765**  
 
 ## What is the average daily activity pattern?  
-```{r}
+
+```r
     meansPerInterval=aggregate(steps ~ interval,ds,FUN=mean, na.rm=TRUE)
     
     plot(meansPerInterval$interval,meansPerInterval$steps,type='l',
          main="Average daily activity",
          ylab = "average number of steps",xlab="interval",col="red")
+```
 
-```  
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
 
 Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?  
-```{r}
+
+```r
     maxInterval = meansPerInterval[which.max(meansPerInterval$steps),]
 ```
-The **`r maxInterval$interval`** interval contains the most steps on average 
-a total of **`r maxInterval$steps`**
+The **835** interval contains the most steps on average 
+a total of **206.1698113**
 
 ## Imputing missing values
 Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with `NAs`)
-```{r}
+
+```r
     numberNA <- length(ds[!complete.cases(ds),1])
 ```
-There is a total of **`r numberNA`** missing values.
+There is a total of **2304** missing values.
 
 Filling in missing values with the mean value for that interval.
-```{r}
+
+```r
     colnames(meansPerInterval)<-c("interval","meanSteps")
     md <-merge(ds,meansPerInterval,x.by=interval,y.by=interval,all.x=TRUE)
     md[is.na(md$steps),2]<-md[is.na(md$steps),4]
     imputed<- md[,c("steps","date","interval")]
 ```
 
-```{r}
+
+```r
     totalsImputed=aggregate(steps ~ date,imputed , sum, na.rm=TRUE)
     hist(totalsImputed$steps,
          main = "Histogram of Total Steps per day (Imputed Blue vs raw dataset)",
@@ -78,28 +85,33 @@ Filling in missing values with the mean value for that interval.
          add = T)
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-7-1.png) 
+
 
 Calculate mean and median values
 
-```{r}
+
+```r
     meanVal=mean(totalsImputed$steps)  
     medianVal=median(totalsImputed$steps)
 ```
-The **mean** of the Total Steps per day is **`r meanVal`**  
-The **median** of the Total Steps per day is **`r medianVal`**  
+The **mean** of the Total Steps per day is **1.0766189\times 10^{4}**  
+The **median** of the Total Steps per day is **1.0766189\times 10^{4}**  
 
 Imputing NA values increased the total means values.
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
-```{r}
+
+```r
     imputed$DayType<-
     weekdays(as.Date(as.character(imputed$date),"%Y-%m-%d")) %in% c('Sunday','Saturday')
     imputed$DayType<-factor(ifelse(imputed$DayType,"Weekend","Weekday"))
 ```
 
 
-```{r}
+
+```r
     totalsImputed=aggregate(steps ~ interval+DayType,imputed , sum, na.rm=TRUE)
     
     library(ggplot2)
@@ -111,8 +123,9 @@ Imputing NA values increased the total means values.
     p <- p + facet_wrap(~ DayType, ncol=1)
     p <- p + geom_line() 
     plot(p)
-
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-10-1.png) 
 
 Yes there is a difference between activity patterns. 
 Less activity over weekends, but more equal activity through the intervals.
